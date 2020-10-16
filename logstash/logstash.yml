@@ -1,0 +1,4 @@
+path.config: "/usr/share/logstash/logstash.conf"
+config.debug: true
+http.host: "0.0.0.0"
+

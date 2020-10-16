@@ -1,0 +1,81 @@
+version: "2"
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.9.2
+    network_mode: host
+    container_name: kibana
+    restart: always
+    environment:
+      - ELASTICSEARCH_HOSTS="http://127.0.0.1:9200"
+      - SERVER_HOST="0.0.0.0"
+      - LOGGING_QUIET=true
+    ports:
+      - 5601:5601
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    container_name: es-data-0
+    restart: always
+    network_mode: host
+    environment:
+      - cluster.name=es-data-0
+      - node.name=es-data-0
+      - path.logs=/var/log
+      - path.data=/usr/share/elasticsearch/data
+      - discovery.seed_hosts=127.0.0.1
+      - network.host=_site_,_local_
+      - node.master=true
+      - node.data=true
+      - path.repo=/usr/share/
+      - "ES_JAVA_OPTS=-Xms5000m -Xmx5000m"
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+      - 9300:9300
+  logstash:
+    privileged: true
+    image: demo-logstash
+    container_name: logstash
+    restart: always
+    network_mode: host
+    command: logstash -f /usr/share/logstash/logstash.conf
+    ports:
+      - 5044:5044
+    volumes:
+      - data01:/usr/share/logstash/data
+    depends_on:
+    - es01
+  heartbeat:
+    privileged: true
+    container_name: heartbeat
+    hostname: heartbeat
+    network_mode: host
+    user: root
+    image: demo-heartbeat
+    depends_on:
+    - logstash
+    command: >
+      bash -c  "heartbeat setup --index-management -E output.logstash.enabled=false -E output.elasticsearch.enabled=true && heartbeat -e -strict.perms=false"
+    restart: always
+  filebeat:
+    privileged: true
+    container_name: filebeat
+    hostname: filebeat
+    network_mode: host
+    user: root
+    image: demo-filebeat
+    volumes:
+    - data01:/usr/share/filebeat/data
+    - /var/lib/docker:/var/lib/docker:ro
+    depends_on:
+    - logstash
+    command: >
+      bash -c "filebeat setup --index-management -E output.logstash.enabled=false -E output.elasticsearch.enabled=true && filebeat -e --strict.perms=false"
+volumes:
+  data01:
+    driver: local
+

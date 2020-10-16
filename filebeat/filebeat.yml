@@ -1,0 +1,18 @@
+setup:
+  ilm.overwrite: true
+  template.enabled: true
+  kibana.host: "http://127.0.0.1:5601"
+
+filebeat.inputs:
+- type: container
+  paths:
+    - '/var/lib/docker/containers/*/*.log'
+
+output:
+  #console.enabled: true
+  logstash.enabled: true
+  logstash.hosts: ["127.0.0.1:5044"]
+  elasticsearch.enabled: false
+  elasticsearch.hosts: ["http://127.0.0.1:9200"]
+
+

@@ -1,0 +1,30 @@
+setup:
+  ilm.overwrite: true
+  template.enabled: true
+  kibana.host: "http://127.0.0.1:5601"
+
+heartbeat.monitors:
+- type: http
+  id: Elasticsearch
+  name: Elasticsearch
+  hosts: ["http://127.0.0.1:9200/_cluster/health"]
+  check.request.method: GET
+  check.response:
+    status: 200
+  schedule: '@every 10s'
+
+
+heartbeat.scheduler:
+  limit: 10
+
+output.elasticsearch:
+  enabled: true
+  hosts: ["http://127.0.0.1:9200"]
+
+output:
+  logstash.enabled: true
+  logstash.hosts: ["127.0.0.1:5044"]
+  elasticsearch.enabled: false
+  elasticsearch.hosts: ["http://127.0.0.1:9200"]
+
+
